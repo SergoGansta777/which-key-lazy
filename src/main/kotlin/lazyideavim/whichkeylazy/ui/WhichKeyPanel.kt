@@ -4,7 +4,6 @@ import lazyideavim.whichkeylazy.model.KeyNode
 import lazyideavim.whichkeylazy.model.WhichKeySettings
 import java.awt.*
 import javax.swing.JPanel
-import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
 
@@ -13,6 +12,8 @@ class WhichKeyPanel(
 ) : JPanel() {
 
     private var entries: List<KeyNode> = emptyList()
+    private var layout = GridLayout(0, 0)
+    private var maxAvailableWidth: Int = Int.MAX_VALUE
     private var maxAvailableHeight: Int = Int.MAX_VALUE
 
     init {
@@ -20,7 +21,8 @@ class WhichKeyPanel(
         background = WhichKeyColors.PANEL_BG
     }
 
-    fun setAvailableHeight(maxHeight: Int) {
+    fun setAvailableSize(maxWidth: Int, maxHeight: Int) {
+        maxAvailableWidth = maxWidth
         maxAvailableHeight = maxHeight
     }
 
@@ -53,13 +55,19 @@ class WhichKeyPanel(
         // How many rows fit in the available height?
         val maxRows = ((maxAvailableHeight - PADDING * 2) / ROW_HEIGHT).coerceAtLeast(1)
 
-        // Vertical-first: use single column unless entries overflow
-        val rows = min(entryCount, maxRows)
-        val cols = ceil(entryCount.toDouble() / rows).toInt()
+        // Fill top-to-bottom, wrapping at the configured row limit.
+        val maxColumns = ((maxAvailableWidth - PADDING * 2) / colWidth).coerceAtLeast(1)
+        layout = PopupGeometry.grid(
+            entryCount,
+            maxRows,
+            maxColumns,
+            settings.maxRows,
+            settings.maxColumns
+        )
 
         preferredSize = Dimension(
-            cols * colWidth + PADDING * 2,
-            rows * ROW_HEIGHT + PADDING * 2
+            layout.columns * colWidth + PADDING * 2,
+            layout.rows * ROW_HEIGHT + PADDING * 2
         )
     }
 
@@ -95,9 +103,7 @@ class WhichKeyPanel(
         val colWidth = computeColumnWidth(fm)
         val showIcons = settings.showIcons
 
-        // Compute layout: how many rows per column
-        val maxRows = ((maxAvailableHeight - PADDING * 2) / ROW_HEIGHT).coerceAtLeast(1)
-        val rows = min(entries.size, maxRows)
+        val rows = layout.rows
 
         for ((index, entry) in entries.withIndex()) {
             // Column-major order: fill top-to-bottom, then next column

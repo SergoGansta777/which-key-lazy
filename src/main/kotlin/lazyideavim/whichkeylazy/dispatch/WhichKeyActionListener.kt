@@ -35,7 +35,7 @@ class WhichKeyActionListener : AnActionListener {
     }
 
     override fun beforeEditorTyping(c: Char, dataContext: DataContext) {
-        val wasShowing = WhichKeyPopupManager.isShowing
+        val wasShowing = WhichKeyPopupManager.isActive
         WhichKeyPopupManager.hidePopup()
 
         val editor = dataContext.getData(CommonDataKeys.EDITOR) ?: return
@@ -59,7 +59,7 @@ class WhichKeyActionListener : AnActionListener {
         actions: MutableList<AnAction>,
         dataContext: DataContext
     ) {
-        val wasShowing = WhichKeyPopupManager.isShowing
+        val wasShowing = WhichKeyPopupManager.isActive
         WhichKeyPopupManager.hidePopup()
 
         if (shortcut !is KeyboardShortcut) return

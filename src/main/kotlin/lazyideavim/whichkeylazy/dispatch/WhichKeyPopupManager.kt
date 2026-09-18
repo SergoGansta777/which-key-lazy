@@ -2,21 +2,21 @@ package lazyideavim.whichkeylazy.dispatch
 
 import lazyideavim.whichkeylazy.model.KeyNode
 import lazyideavim.whichkeylazy.ui.WhichKeyPopup
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.editor.Editor
+import lazyideavim.whichkeylazy.config.WhichKeyConfigService
+import javax.swing.Timer
 
-/**
- * Stateless popup lifecycle manager.
- * Popup is destroyed and recreated on every keystroke.
- */
+/** Coordinates delayed display and closes the current popup on the next keystroke. */
 object WhichKeyPopupManager {
 
     private var popup: WhichKeyPopup? = null
+    private var pendingPopup: Timer? = null
 
-    val isShowing: Boolean get() = popup != null
+    val isActive: Boolean get() = popup != null || pendingPopup != null
 
     fun hidePopup() {
+        pendingPopup?.stop()
+        pendingPopup = null
         popup?.close()
         popup = null
     }
@@ -24,16 +24,19 @@ object WhichKeyPopupManager {
     fun showPopup(editor: Editor, path: List<String>, entries: Map<String, KeyNode>) {
         if (entries.isEmpty()) return
 
-        val dataContext = SimpleDataContext.builder()
-            .add(CommonDataKeys.EDITOR, editor)
-            .add(CommonDataKeys.PROJECT, editor.project)
-            .build()
-
-        val newPopup = WhichKeyPopup(editor, dataContext)
-        popup = newPopup
-        newPopup.show(entries)
-        if (path.isNotEmpty()) {
-            newPopup.updateLevel(path, entries)
+        pendingPopup?.stop()
+        val delay = WhichKeyConfigService.getInstance().settings.delay.coerceAtLeast(0)
+        pendingPopup = Timer(delay) {
+            pendingPopup = null
+            if (!editor.isDisposed) {
+                val newPopup = WhichKeyPopup(editor)
+                popup = newPopup
+                newPopup.show(entries)
+                if (path.isNotEmpty()) newPopup.updateLevel(path, entries)
+            }
+        }.apply {
+            isRepeats = false
+            start()
         }
     }
 }

@@ -2,14 +2,12 @@ package lazyideavim.whichkeylazy.ui
 
 import lazyideavim.whichkeylazy.config.WhichKeyConfigService
 import lazyideavim.whichkeylazy.model.KeyNode
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.awt.RelativePoint
 import java.awt.BorderLayout
 import java.awt.Dimension
-import java.awt.Point
 import javax.swing.BorderFactory
 import javax.swing.JPanel
 
@@ -17,10 +15,7 @@ import javax.swing.JPanel
  * Purely visual which-key popup. Does not handle key events -- IdeaVim processes
  * all keys, and WhichKeyPopupManager updates this popup externally.
  */
-class WhichKeyPopup(
-    private val editor: Editor,
-    private val dataContext: DataContext
-) {
+class WhichKeyPopup(private val editor: Editor) {
 
     private val breadcrumb = BreadcrumbBar()
     private val gridPanel = WhichKeyPanel(WhichKeyConfigService.getInstance().settings)
@@ -28,11 +23,8 @@ class WhichKeyPopup(
     private var popup: JBPopup? = null
     private var rootPanel: JPanel? = null
 
-    val isShowing: Boolean
-        get() = popup?.isVisible == true
-
     fun show(bindings: Map<String, KeyNode>) {
-        gridPanel.setAvailableHeight(availableHeight())
+        updateAvailableSize()
 
         val panel = JPanel(BorderLayout()).apply {
             background = WhichKeyColors.PANEL_BG
@@ -55,11 +47,11 @@ class WhichKeyPopup(
             .setResizable(false)
             .createPopup()
 
-        showAtEditorBottom()
+        showAtConfiguredPosition()
     }
 
     fun updateLevel(path: List<String>, bindings: Map<String, KeyNode>) {
-        gridPanel.setAvailableHeight(availableHeight())
+        updateAvailableSize()
         breadcrumb.updatePath(path)
         gridPanel.updateEntries(bindings)
 
@@ -80,11 +72,12 @@ class WhichKeyPopup(
         popup = null
     }
 
-    private fun availableHeight(): Int {
-        return (editor.scrollingModel.visibleArea.height * 0.6).toInt()
+    private fun updateAvailableSize() {
+        val visibleArea = editor.scrollingModel.visibleArea
+        gridPanel.setAvailableSize(visibleArea.width, (visibleArea.height * 0.6).toInt())
     }
 
-    private fun showAtEditorBottom() {
+    private fun showAtConfiguredPosition() {
         val panel = rootPanel ?: return
         val contentComponent = editor.contentComponent
         val visibleRect = contentComponent.visibleRect
@@ -94,10 +87,15 @@ class WhichKeyPopup(
         val popupWidth = prefSize.width.coerceAtLeast(300).coerceAtMost(visibleRect.width)
         val popupHeight = prefSize.height.coerceAtLeast(80)
 
-        val x = visibleRect.x + (visibleRect.width - popupWidth) / 2
-        val y = visibleRect.y + visibleRect.height - popupHeight
+        val popupSize = Dimension(popupWidth, popupHeight)
+        val origin = PopupGeometry.origin(
+            WhichKeyConfigService.getInstance().settings.position,
+            visibleRect,
+            popupSize,
+            editor.visualPositionToXY(editor.caretModel.visualPosition)
+        )
 
-        popup?.size = Dimension(popupWidth, popupHeight)
-        popup?.show(RelativePoint(contentComponent, Point(x, y)))
+        popup?.size = popupSize
+        popup?.show(RelativePoint(contentComponent, origin))
     }
 }

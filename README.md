@@ -172,7 +172,9 @@ The plugin works out of the box with zero configuration. For advanced customizat
   "settings": {
     "delay": 200,
     "maxColumns": 5,
+    "maxRows": 8,
     "sortGroupsFirst": true,
+    "position": "bottom-right",
     "showIcons": true
   },
   "overrides": {
@@ -186,9 +188,11 @@ The plugin works out of the box with zero configuration. For advanced customizat
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `delay` | `200` | Milliseconds before popup appears |
+| `delay` | `200` | Milliseconds of inactivity before the popup appears |
 | `maxColumns` | `5` | Maximum number of columns in the popup |
+| `maxRows` | `8` | Preferred maximum number of rows before entries wrap into another column |
 | `sortGroupsFirst` | `true` | Show groups before actions |
+| `position` | `bottom-right` | Popup placement: `bottom-right`, `bottom`, `bottom-left`, or `cursor` |
 | `showIcons` | `true` | Show icons next to entries |
 
 ### Per-key Overrides
