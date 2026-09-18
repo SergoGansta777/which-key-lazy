@@ -36,7 +36,6 @@ class WhichKeyActionListener : AnActionListener {
 
     override fun beforeEditorTyping(c: Char, dataContext: DataContext) {
         val wasShowing = WhichKeyPopupManager.isActive
-        WhichKeyPopupManager.hidePopup()
 
         val editor = dataContext.getData(CommonDataKeys.EDITOR) ?: return
         if (!EditorHelper.isFileEditor(editor)) return
@@ -60,7 +59,6 @@ class WhichKeyActionListener : AnActionListener {
         dataContext: DataContext
     ) {
         val wasShowing = WhichKeyPopupManager.isActive
-        WhichKeyPopupManager.hidePopup()
 
         if (shortcut !is KeyboardShortcut) return
 
@@ -114,6 +112,7 @@ class WhichKeyActionListener : AnActionListener {
         if (result != null && result.entries.isNotEmpty()) {
             WhichKeyPopupManager.showPopup(editor, result.path, result.entries)
         } else {
+            WhichKeyPopupManager.hidePopup()
             // In INSERT/OP_PENDING modes, unmapped chars should pass through
             if (mappingMode != MappingMode.NORMAL && mappingMode != MappingMode.VISUAL) return
 

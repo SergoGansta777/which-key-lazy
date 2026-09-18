@@ -2,6 +2,7 @@ package lazyideavim.whichkeylazy.ui
 
 import lazyideavim.whichkeylazy.model.KeyNode
 import lazyideavim.whichkeylazy.model.WhichKeySettings
+import com.intellij.util.ui.JBUI
 import java.awt.*
 import javax.swing.JPanel
 import kotlin.math.max
@@ -17,8 +18,7 @@ class WhichKeyPanel(
     private var maxAvailableHeight: Int = Int.MAX_VALUE
 
     init {
-        isOpaque = true
-        background = WhichKeyColors.PANEL_BG
+        isOpaque = false
     }
 
     fun setAvailableSize(maxWidth: Int, maxHeight: Int) {
@@ -77,16 +77,15 @@ class WhichKeyPanel(
         for (entry in entries) {
             val keyWidth = fm.stringWidth(displayKey(entry.key)) + KEY_BADGE_PADDING * 2
             val descWidth = fm.stringWidth(entry.description)
-            val separatorWidth = fm.stringWidth(" \u279C ")
             val iconWidth = if (showIcons) ICON_SIZE + ICON_RIGHT_MARGIN else 0
-            val totalWidth = iconWidth + keyWidth + separatorWidth + descWidth + ENTRY_PADDING * 2
+            val totalWidth = iconWidth + keyWidth + KEY_DESCRIPTION_GAP + descWidth + ENTRY_PADDING * 2
             maxWidth = max(maxWidth, totalWidth)
         }
         return min(maxWidth, MAX_COL_WIDTH)
     }
 
     private fun entryFont(): Font {
-        return WhichKeyColors.EDITOR_FONT.deriveFont(Font.PLAIN, WhichKeyColors.EDITOR_FONT_SIZE.toFloat())
+        return WhichKeyColors.UI_FONT.deriveFont(Font.PLAIN, WhichKeyColors.UI_FONT_SIZE)
     }
 
     override fun paintComponent(g: Graphics) {
@@ -121,33 +120,23 @@ class WhichKeyPanel(
                 if (icon != null) {
                     val iconY = y + (ROW_HEIGHT - ICON_SIZE) / 2
                     icon.paintIcon(this, g2, cursorX, iconY)
-                } else {
-                    // Draw a small white dot as placeholder for alignment
-                    val dotSize = 6
-                    val dotX = cursorX + (ICON_SIZE - dotSize) / 2
-                    val dotY = y + (ROW_HEIGHT - dotSize) / 2
-                    g2.color = WhichKeyColors.SEPARATOR
-                    g2.fillOval(dotX, dotY, dotSize, dotSize)
                 }
                 cursorX += ICON_SIZE + ICON_RIGHT_MARGIN
             }
 
             val keyText = displayKey(entry.key)
             val keyWidth = fm.stringWidth(keyText) + KEY_BADGE_PADDING * 2
-            val badgeHeight = ROW_HEIGHT - 6
-            val badgeY = y + 3
+            val badgeHeight = ROW_HEIGHT - JBUI.scale(8)
+            val badgeY = y + JBUI.scale(4)
             g2.color = WhichKeyColors.KEY_BG
-            g2.fillRoundRect(cursorX, badgeY, keyWidth, badgeHeight, 6, 6)
+            g2.fillRoundRect(cursorX, badgeY, keyWidth, badgeHeight, JBUI.scale(8), JBUI.scale(8))
 
             g2.color = WhichKeyColors.KEY_FG
             g2.font = font.deriveFont(Font.BOLD)
             g2.drawString(keyText, cursorX + KEY_BADGE_PADDING, textY)
             g2.font = font
 
-            cursorX += keyWidth + 4
-            g2.color = WhichKeyColors.SEPARATOR
-            g2.drawString("\u279C", cursorX, textY)
-            cursorX += fm.stringWidth("\u279C") + 4
+            cursorX += keyWidth + KEY_DESCRIPTION_GAP
 
             val desc = entry.description
             g2.color = when (entry) {
@@ -213,13 +202,14 @@ class WhichKeyPanel(
     }
 
     companion object {
-        private const val ROW_HEIGHT = 28
-        private const val PADDING = 8
-        private const val ENTRY_PADDING = 8
-        private const val KEY_BADGE_PADDING = 6
-        private const val MIN_COL_WIDTH = 140
-        private const val MAX_COL_WIDTH = 420
-        private const val ICON_SIZE = 16
-        private const val ICON_RIGHT_MARGIN = 6
+        private val ROW_HEIGHT get() = JBUI.scale(30)
+        private val PADDING get() = JBUI.scale(10)
+        private val ENTRY_PADDING get() = JBUI.scale(8)
+        private val KEY_BADGE_PADDING get() = JBUI.scale(6)
+        private val KEY_DESCRIPTION_GAP get() = JBUI.scale(8)
+        private val MIN_COL_WIDTH get() = JBUI.scale(152)
+        private val MAX_COL_WIDTH get() = JBUI.scale(420)
+        private val ICON_SIZE get() = JBUI.scale(16)
+        private val ICON_RIGHT_MARGIN get() = JBUI.scale(8)
     }
 }
